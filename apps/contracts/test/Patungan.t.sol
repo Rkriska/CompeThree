@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 // import {Test, console} from "forge-std/Test.sol";
-// import {Patungan} from "../src/Patungan.sol";
+// import {JointVentures} from "../src/JointVentures.sol";
 
 // // RUN
 // // forge test --match-contract PatunganTest -vvv
@@ -14,7 +14,6 @@ pragma solidity ^0.8.13;
 //     address public bob = makeAddr("bob");
 //     address public carol = makeAddr("carol");
 //     address public denis = makeAddr("denis");
-
 //     address public owner = makeAddr("owner");
 
 //     function setUp() public {
