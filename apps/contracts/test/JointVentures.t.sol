@@ -21,6 +21,7 @@ contract JointVenturesTest is Test {
 
         // Granting role
         jointVentures.grantRole(jointVentures.FINANCE_ROLE(), finance);
+        jointVentures.grantRole(jointVentures.OPERATOR_ROLE(), finance);
         vm.stopPrank();
     }
 
