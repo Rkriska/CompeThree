@@ -9,10 +9,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-/**
- * @title CodeArenaRewardsV2
- * @dev Kontrak distribusi hadiah yang aman dengan perlindungan Reentrancy, Jeda Darurat, dan Hak Akses Owner.
- */
 contract CodeArenaRewardsV2 is EIP712, Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
@@ -20,24 +16,19 @@ contract CodeArenaRewardsV2 is EIP712, Ownable, Pausable, ReentrancyGuard {
     IERC20 public immutable usdc;
     address public judgeSigner;
 
-    // Catatan klaim: solver => problemId => status klaim (Anti-Tuyul / Double Claim)
     mapping(address => mapping(string => bool)) public claimed;
-    
-    // Papan skor total pendapatan masing-masing peserta
     mapping(address => uint256) public totalEarnings;
 
-    // Typehash standar EIP-712 agar data terstruktur aman saat ditandatangani backend
     bytes32 private constant REWARD_TYPEHASH = keccak256(
         "Reward(address solver,string problemId,uint256 amount)"
     );
 
-    // Event untuk monitoring real-time di frontend via subgraphs / websockets
     event RewardClaimed(address indexed solver, string problemId, uint256 amount);
     event JudgeSignerUpdated(address indexed oldSigner, address indexed newSigner);
 
     constructor(address _usdc, address _signer) 
         EIP712("CodeArena", "2") 
-        Ownable(msg.sender) // Menetapkan dompet deployer (Rabby Wallet kamu) sebagai Owner mutlak
+        Ownable(msg.sender) 
     {
         require(_usdc != address(0), "Invalid token address");
         require(_signer != address(0), "Invalid signer address");
@@ -45,19 +36,13 @@ contract CodeArenaRewardsV2 is EIP712, Ownable, Pausable, ReentrancyGuard {
         judgeSigner = _signer;
     }
 
-    /**
-     * @notice Fungsi utama bagi peserta untuk mencairkan hadiah USDC mereka.
-     * @dev Dilindungi oleh pembekuan (whenNotPaused) dan anti-kuras berulang (nonReentrant).
-     */
     function claimReward(
         string calldata problemId, 
         uint256 amount, 
         bytes calldata signature
     ) external whenNotPaused nonReentrant {
-        // 1. CHECKS (Validasi awal)
         require(!claimed[msg.sender][problemId], "Already claimed");
 
-        // Rekonstruksi hash ter-tipe V4 sesuai standar kriptografi EIP-712
         bytes32 hash = _hashTypedDataV4(keccak256(abi.encode(
             REWARD_TYPEHASH,
             msg.sender,
@@ -65,40 +50,24 @@ contract CodeArenaRewardsV2 is EIP712, Ownable, Pausable, ReentrancyGuard {
             amount
         )));
 
-        // Verifikasi keaslian tanda tangan digital dari server backend (Judge Signer)
         require(hash.recover(signature) == judgeSigner, "Invalid signature");
 
-        // 2. EFFECTS (Menulis perubahan ke buku kas blockchain sebelum transfer uang)
         claimed[msg.sender][problemId] = true;
         totalEarnings[msg.sender] += amount;
 
-        // 3. INTERACTIONS (Mengirim dana secara aman menggunakan SafeERC20)
         usdc.safeTransfer(msg.sender, amount);
 
         emit RewardClaimed(msg.sender, problemId, amount);
     }
 
-    /* ========================================================================
-       FUNGSI MANAJEMEN ADMIN (HANYA BISA DIAKSES OLEH OWNER / RABBY WALLET)
-       ======================================================================== */
-
-    /**
-     * @notice Menekan Rem Darurat (Membekukan fungsi claimReward jika ada bug/serangan).
-     */
     function pause() external onlyOwner {
         _pause();
     }
 
-    /**
-     * @notice Melepas Rem Darurat (Mengaktifkan kembali sistem klaim hadiah).
-     */
     function unpause() external onlyOwner {
         _unpause();
     }
 
-    /**
-     * @notice Mengganti alamat dompet kunci backend (Juri) tanpa harus deploy ulang kontrak.
-     */
     function setJudgeSigner(address _newSigner) external onlyOwner {
         require(_newSigner != address(0), "Invalid signer address");
         address oldSigner = judgeSigner;
@@ -106,9 +75,6 @@ contract CodeArenaRewardsV2 is EIP712, Ownable, Pausable, ReentrancyGuard {
         emit JudgeSignerUpdated(oldSigner, _newSigner);
     }
 
-    /**
-     * @notice Evakuasi Darurat! Menarik keluar USDC atau token lain jika proyek mau migrasi.
-     */
     function emergencyWithdraw(address token, uint256 amount) external onlyOwner {
         require(token != address(0), "Invalid token address");
         IERC20(token).safeTransfer(owner(), amount);

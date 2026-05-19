@@ -1,4 +1,5 @@
 import { JointVenturesAbi } from "./abis/JointVenturesAbi";
+import { CodeArenaRewardsV2Abi } from "./abis/CodeArenaRewardsV2Abi";
 
 export const CONTRACTS = {
   JOINT_VENTURES: "0xE981Bb5e5F9b441A373881C8FE9F6db1322aDb95" as `0x${string}`,
@@ -6,6 +7,8 @@ export const CONTRACTS = {
   PRICE_FEED: "0x341D078d727bE58f03144F980a3682a9EAD55be7" as `0x${string}`,
   MOCK_USDC: "0x265971bcd643f3DcCB5c94111A3E3AD5542189Be" as `0x${string}`,
   MOCK_USDT: "0x1275F3565F9F28370856109f7C886F94b9816308" as `0x${string}`,
+  // Alamat Kontrak Baru CodeArena V2 di Celo Mainnet
+  CODE_ARENA_V2: "0x83B41A60c04E89f2786b8Fd9876137ADC403EFFC" as `0x${string}`,
 } as const;
 
 export const WHITELISTED_TOKENS = [
@@ -16,4 +19,10 @@ export const WHITELISTED_TOKENS = [
 export const jointVenturesConfig = {
   address: CONTRACTS.JOINT_VENTURES,
   abi: JointVenturesAbi,
+} as const;
+
+// Konfigurasi Baru untuk CodeArena V2 (Mengikuti struktur asli)
+export const codeArenaRewardsV2Config = {
+  address: CONTRACTS.CODE_ARENA_V2,
+  abi: CodeArenaRewardsV2Abi,
 } as const;
